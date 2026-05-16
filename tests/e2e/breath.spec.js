@@ -260,3 +260,59 @@ test.describe('Preset picker (burger menu)', () => {
     await expect(page.locator('#hint')).toContainText('Coherent 6-6');
   });
 });
+
+test.describe('localStorage edge cases', () => {
+  test('chiave persistita è esattamente "breath.preset" (contratto stabile)', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#burger').click();
+    await page.locator('.preset[data-preset="coh-5"]').click();
+
+    const stored = await page.evaluate(() => localStorage.getItem('breath.preset'));
+    expect(stored).toBe('coh-5');
+  });
+
+  test('valore non valido salvato in localStorage: l\'app cade sul default 4-8', async ({ page, context }) => {
+    // Simula un utente che aveva un preset poi rimosso/rinominato in una release futura
+    await context.addInitScript(() => {
+      try { localStorage.setItem('breath.preset', 'preset-che-non-esiste'); } catch (_) {}
+    });
+    /** @type {string[]} */
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    await page.goto('/');
+
+    await expect(page.locator('#hint')).toContainText('4-8');
+    await page.locator('#burger').click();
+    await expect(page.locator('.preset[aria-current="true"]')).toHaveAttribute('data-preset', '4-8');
+    expect(errors).toEqual([]);
+  });
+
+  test('localStorage non disponibile (private mode / quota): app funziona, niente crash', async ({ page, context }) => {
+    // Simula Safari iOS private mode dove getItem/setItem lanciano
+    await context.addInitScript(() => {
+      const blow = () => { throw new Error('Storage disabled'); };
+      Object.defineProperty(Storage.prototype, 'getItem', { value: blow, configurable: true });
+      Object.defineProperty(Storage.prototype, 'setItem', { value: blow, configurable: true });
+    });
+    /** @type {string[]} */
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    await page.goto('/');
+
+    // Il try/catch in loadPreset deve far cadere sul default
+    await expect(page.locator('#hint')).toContainText('4-8');
+
+    // Cambiare preset non deve crashare anche se savePreset fallisce silenziosamente
+    await page.locator('#burger').click();
+    await page.locator('.preset[data-preset="box"]').click();
+    await expect(page.locator('#hint')).toContainText('Box');
+
+    // Una sessione deve poter partire normalmente
+    await page.locator('#toggle').click();
+    await expect(page.locator('#phase')).toHaveText('INSPIRA');
+
+    expect(errors, `Errori non gestiti: ${errors.join(', ')}`).toEqual([]);
+  });
+});
