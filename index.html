@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10">
+<meta name="description" content="Esercizio di respirazione 4 secondi inspira / 8 secondi espira.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Breath 4/8</title>
+<style>
+  :root {
+    --bg: #0b0b10;
+    --fg: #e6f4f1;
+    --muted: #7c8ea0;
+    --accent-inhale: #6ee7f9;
+    --accent-exhale: #1e3a8a;
+    --ring: rgba(110, 231, 249, 0.15);
+    --phase-dur: 4000ms;
+    --scale: 0.35;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: max(env(safe-area-inset-top), 24px) 24px max(env(safe-area-inset-bottom), 24px);
+    min-height: 100dvh;
+  }
+
+  .phase {
+    font-size: clamp(28px, 6vw, 44px);
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 300ms ease;
+    margin-top: 8px;
+    min-height: 1.2em;
+  }
+  .phase.active { color: var(--fg); }
+
+  .stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+  }
+
+  .ball {
+    width: min(70vw, 70vh, 360px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--accent-inhale), var(--accent-exhale) 70%);
+    box-shadow:
+      0 0 60px var(--ring),
+      0 0 120px rgba(30, 58, 138, 0.25);
+    transform: scale(var(--scale));
+    transition: transform var(--phase-dur) cubic-bezier(.45, .05, .55, .95);
+    will-change: transform;
+  }
+
+  .meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .cycles {
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .cycles strong {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .toggle {
+    appearance: none;
+    border: 1px solid rgba(230, 244, 241, 0.2);
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    font-size: 18px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 20px 48px;
+    min-height: 64px;
+    min-width: 200px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .toggle:hover, .toggle:focus-visible {
+    background: rgba(230, 244, 241, 0.06);
+    border-color: rgba(230, 244, 241, 0.4);
+    outline: none;
+  }
+  .toggle.running {
+    border-color: var(--accent-inhale);
+    color: var(--accent-inhale);
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="phase" id="phase">PRONTO</div>
+
+  <div class="stage">
+    <div class="ball" id="ball"></div>
+  </div>
+
+  <div class="meta">
+    <div class="cycles">Cicli: <strong id="cycles">0</strong></div>
+    <button class="toggle" id="toggle" type="button">Start</button>
+    <div class="hint">4s inspira · 8s espira</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
