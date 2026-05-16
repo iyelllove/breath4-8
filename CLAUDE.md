@@ -4,14 +4,18 @@ App PWA installabile (HTML/CSS/JS vanilla, niente framework, niente build step).
 Ciclo: 4s inspira / 8s espira, continuo. Beep WebAudio + pallino animato.
 
 ## Stack
-- Vanilla JS + CSS inline (zero dipendenze, zero build)
+- **Runtime:** vanilla JS + CSS inline, **zero dipendenze a runtime**, zero build
 - Service worker per offline (cache `breath-v<N>` — incrementare ad ogni release in `sw.js`)
 - `nginx:alpine` in Docker per dev locale
 - Hosting produzione: GitHub Pages su https://github.com/iyelllove/breath4-8
+- **Test (dev-only):** Playwright + bash smoke. Le devDeps in `package.json` non finiscono dentro l'immagine Docker (escluse via `.dockerignore`)
 
 ## Comandi
 - `docker compose up` → http://localhost:8000
-- `git push` → auto-deploy su https://iyelllove.github.io/breath4-8/
+- `npm test` → smoke + E2E (richiede container attivo o lo avvia via Playwright `webServer`)
+- `npm run smoke` → solo smoke (curl + grep sui sorgenti, ~1s)
+- `npm run test:e2e` → solo Playwright headless Chromium
+- `git push` → auto-deploy su https://iyelllove.github.io/breath4-8/ + esecuzione CI (`.github/workflows/test.yml`)
 
 ## Convenzioni
 - Niente framework, niente bundler, niente npm. Restare vanilla.
@@ -27,6 +31,9 @@ Ciclo: 4s inspira / 8s espira, continuo. Beep WebAudio + pallino animato.
 - `sw.js` — cache-first, costante `CACHE` da bumpare
 - `manifest.webmanifest` — PWA manifest, path relativi
 - `nginx.conf` — MIME corretto per `.webmanifest`, no-cache su `sw.js`
+- `tests/smoke.sh` — assertion HTTP + grep su sorgenti (versione SW, path relativi, MIME)
+- `tests/e2e/breath.spec.js` — Playwright: SW registrato, ciclo completo a 12s, beep emessi, no errori console
+- `.github/workflows/test.yml` — CI: builda container, smoke + E2E ad ogni push/PR
 
 ## Note tecniche
 - `AudioContext` va creato dentro un user gesture (la policy autoplay mobile blocca il suono altrimenti). Lo creiamo nel handler del bottone Start.

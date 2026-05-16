@@ -1,0 +1,14 @@
+{
+  "name": "breath",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Breath 4/8 PWA — dev tooling only. The runtime is vanilla HTML/CSS/JS with zero dependencies.",
+  "scripts": {
+    "smoke": "bash tests/smoke.sh",
+    "test:e2e": "playwright test",
+    "test": "bash tests/smoke.sh && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}

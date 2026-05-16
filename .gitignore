@@ -3,3 +3,9 @@
 .vscode/
 .idea/
 *.swp
+
+# Node / Playwright
+node_modules/
+playwright-report/
+test-results/
+.playwright/

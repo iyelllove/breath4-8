@@ -26,6 +26,19 @@ docker compose up
 
 Modifiche a HTML/JS/CSS sono live-reload-ready: bind mount, basta `Ctrl+R` nel browser.
 
+## Test
+
+```bash
+npm install                # solo la prima volta (devDeps: Playwright)
+npx playwright install chromium
+
+npm run smoke              # bash + curl: status, MIME, marker sorgente (~1s)
+npm run test:e2e           # Playwright headless: SW, ciclo, beep, no errori
+npm test                   # smoke + e2e
+```
+
+CI: `.github/workflows/test.yml` esegue smoke + Playwright su ogni push e PR verso `main`.
+
 ## Deploy
 
 `git push` su `main` → GitHub Pages pubblica automaticamente su https://iyelllove.github.io/breath4-8/.
