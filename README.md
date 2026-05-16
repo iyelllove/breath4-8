@@ -56,3 +56,10 @@ CI: `.github/workflows/test.yml` esegue smoke + Playwright su ogni push e PR ver
 ## Stack
 
 Vanilla HTML/CSS/JS. Niente framework. Niente npm. Niente build.
+
+## Documentazione
+
+- **`CLAUDE.md`** — convenzioni di progetto, ricetta per aggiungere un nuovo preset, contratto stabile di `localStorage`.
+- **`docs/ARCHITECTURE.md`** — decisioni tecniche, flusso dati, perché vanilla, gestione service worker / audio / wake lock.
+- **`docs/TESTING.md`** — strategia di test, cosa copre ognuno dei 16 test, limiti noti, pattern riusabili.
+- **`CHANGELOG.md`** — log delle release allineato alla versione di cache del service worker.
