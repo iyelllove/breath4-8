@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0b10">
-<meta name="description" content="Esercizio di respirazione 4 secondi inspira / 8 secondi espira.">
+<meta name="description" content="App di respirazione guidata: 4-8, 4-7-8, Box, Coherent.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Breath 4/8</title>
+<title>Breath</title>
 <style>
   :root {
     --bg: #0b0b10;
+    --bg-elev: #15151f;
     --fg: #e6f4f1;
     --muted: #7c8ea0;
     --accent-inhale: #6ee7f9;
@@ -41,20 +42,60 @@
     justify-content: space-between;
     padding: max(env(safe-area-inset-top), 24px) 24px max(env(safe-area-inset-bottom), 24px);
     min-height: 100dvh;
+    position: relative;
+  }
+
+  /* ── Burger + topbar ────────────────────────────────── */
+  .topbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 48px;
+  }
+
+  .burger {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--fg);
+    padding: 12px;
+    margin: -12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    min-width: 48px;
+    min-height: 48px;
+  }
+  .burger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--fg);
+    border-radius: 2px;
+    transition: transform 200ms ease, opacity 200ms ease;
   }
 
   .phase {
-    font-size: clamp(28px, 6vw, 44px);
+    font-size: clamp(22px, 5vw, 32px);
     font-weight: 300;
     letter-spacing: 0.3em;
     text-transform: uppercase;
     color: var(--muted);
     transition: color 300ms ease;
-    margin-top: 8px;
-    min-height: 1.2em;
+    text-align: right;
+    flex: 1;
   }
   .phase.active { color: var(--fg); }
 
+  /* invisible spacer to keep phase visually centered when no burger */
+  .topbar-spacer { width: 48px; }
+
+  /* ── Stage / ball ───────────────────────────────────── */
   .stage {
     flex: 1;
     display: flex;
@@ -65,7 +106,7 @@
   }
 
   .ball {
-    width: min(70vw, 70vh, 360px);
+    width: min(70vw, 60vh, 360px);
     aspect-ratio: 1;
     border-radius: 50%;
     background: radial-gradient(circle at 35% 35%, var(--accent-inhale), var(--accent-exhale) 70%);
@@ -77,11 +118,12 @@
     will-change: transform;
   }
 
+  /* ── Controls ───────────────────────────────────────── */
   .meta {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
   }
 
@@ -91,10 +133,7 @@
     color: var(--muted);
     text-transform: uppercase;
   }
-  .cycles strong {
-    color: var(--fg);
-    font-weight: 500;
-  }
+  .cycles strong { color: var(--fg); font-weight: 500; }
 
   .toggle {
     appearance: none;
@@ -105,12 +144,12 @@
     font-size: 18px;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    padding: 20px 48px;
-    min-height: 64px;
+    padding: 18px 48px;
+    min-height: 60px;
     min-width: 200px;
     border-radius: 999px;
     cursor: pointer;
-    transition: background 200ms ease, border-color 200ms ease;
+    transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
   }
   .toggle:hover, .toggle:focus-visible {
     background: rgba(230, 244, 241, 0.06);
@@ -127,13 +166,117 @@
     color: var(--muted);
     letter-spacing: 0.1em;
     text-align: center;
-    max-width: 280px;
     line-height: 1.6;
+  }
+  .hint strong { color: var(--fg); font-weight: 500; }
+
+  /* ── Drawer (preset picker) ─────────────────────────── */
+  .drawer {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 50;
+    padding: max(env(safe-area-inset-top), 24px) 24px max(env(safe-area-inset-bottom), 24px);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(-100%);
+    transition: transform 250ms cubic-bezier(.3, .7, .4, 1);
+    overflow-y: auto;
+  }
+  .drawer.open { transform: translateY(0); }
+
+  .drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    min-height: 48px;
+  }
+  .drawer-title {
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .drawer-close {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--fg);
+    font-size: 24px;
+    line-height: 1;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .presets {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .preset {
+    appearance: none;
+    background: var(--bg-elev);
+    border: 1px solid transparent;
+    color: var(--fg);
+    text-align: left;
+    padding: 18px 20px;
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font: inherit;
+    width: 100%;
+    transition: border-color 200ms ease, background 200ms ease;
+  }
+  .preset:hover, .preset:focus-visible {
+    border-color: rgba(230, 244, 241, 0.2);
+    outline: none;
+  }
+  .preset[aria-current="true"] {
+    border-color: var(--accent-inhale);
+  }
+  .preset-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .preset-label {
+    font-size: 18px;
+    letter-spacing: 0.05em;
+  }
+  .preset-check {
+    color: var(--accent-inhale);
+    font-size: 16px;
+    opacity: 0;
+  }
+  .preset[aria-current="true"] .preset-check { opacity: 1; }
+  .preset-desc {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .preset-tempo {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    margin-top: 6px;
   }
 </style>
 </head>
 <body>
-  <div class="phase" id="phase">PRONTO</div>
+  <header class="topbar">
+    <button class="burger" id="burger" type="button" aria-label="Apri schemi di respirazione" aria-expanded="false" aria-controls="drawer">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="phase" id="phase">PRONTO</div>
+  </header>
 
   <div class="stage">
     <div class="ball" id="ball"></div>
@@ -142,8 +285,16 @@
   <div class="meta">
     <div class="cycles">Cicli: <strong id="cycles">0</strong></div>
     <button class="toggle" id="toggle" type="button">Start</button>
-    <div class="hint">4s inspira · 8s espira</div>
+    <div class="hint" id="hint">4s inspira · 8s espira</div>
   </div>
+
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-title">Schema</div>
+      <button class="drawer-close" id="drawer-close" type="button" aria-label="Chiudi">✕</button>
+    </div>
+    <ul class="presets" id="presets" role="listbox" aria-label="Schema di respirazione"></ul>
+  </aside>
 
   <script src="app.js"></script>
 </body>

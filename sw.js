@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE = 'breath-v1';
+const CACHE = 'breath-v2';
 const ASSETS = [
   './',
   'index.html',

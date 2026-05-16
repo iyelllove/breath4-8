@@ -1,7 +1,16 @@
-# Breath — PWA di respirazione 4/8
+# Breath — PWA di respirazione
 
 App PWA installabile (HTML/CSS/JS vanilla, niente framework, niente build step).
-Ciclo: 4s inspira / 8s espira, continuo. Beep WebAudio + pallino animato.
+Beep WebAudio + pallino animato. Default: 4s inspira / 8s espira (modificabile dal burger menu).
+
+## Schemi supportati (`PRESETS` in `app.js`)
+- `4-8` (default) — rilassante, 2 fasi
+- `4-7-8` — Andrew Weil, anti-ansia/sonno, 3 fasi (inspira/trattieni/espira)
+- `box` — Navy SEAL, 4 fasi simmetriche (inspira/trattieni/espira/pausa)
+- `coh-5` — Coherent breathing, ~6 respiri/min
+- `coh-6` — Coherent breathing più rilassato, 5 respiri/min
+
+Le fasi di hold/pausa hanno `freq: 0` → silenzio (il beep arriva solo all'inizio delle fasi attive). Il pallino mantiene la posizione corrente. La scelta del preset viene persistita in `localStorage` chiave `breath.preset`.
 
 ## Stack
 - **Runtime:** vanilla JS + CSS inline, **zero dipendenze a runtime**, zero build

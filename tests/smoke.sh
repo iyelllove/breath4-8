@@ -60,12 +60,28 @@ grep -q "INSPIRA" "${PROJECT_ROOT}/app.js" && grep -q "ESPIRA" "${PROJECT_ROOT}/
 pass "app.js: fasi INSPIRA/ESPIRA presenti"
 
 grep -q "durMs: 4000" "${PROJECT_ROOT}/app.js" && grep -q "durMs: 8000" "${PROJECT_ROOT}/app.js" \
-  || fail "app.js: durate fasi cambiate (atteso 4000ms / 8000ms)"
-pass "app.js: durate 4s / 8s coerenti"
+  || fail "app.js: durate fasi 4-8 cambiate (atteso 4000ms / 8000ms nel preset di default)"
+pass "app.js: durate 4s / 8s coerenti per default 4-8"
 
 grep -q 'navigator.serviceWorker.register' "${PROJECT_ROOT}/app.js" \
   || fail "app.js: SW non registrato"
 pass "app.js: registrazione SW presente"
+
+# Tutti i 5 preset devono essere definiti (rottura silenziosa se uno scompare per refactor)
+for key in "'4-8'" "'4-7-8'" "'box'" "'coh-5'" "'coh-6'"; do
+  grep -qF "${key}:" "${PROJECT_ROOT}/app.js" \
+    || fail "app.js: preset ${key} mancante in PRESETS"
+  pass "app.js: preset ${key} presente"
+done
+
+grep -q "DEFAULT_PRESET = '4-8'" "${PROJECT_ROOT}/app.js" \
+  || fail "app.js: DEFAULT_PRESET non è '4-8' (Nico vuole 4-8 come default)"
+pass "app.js: DEFAULT_PRESET = '4-8'"
+
+# Il drawer deve esistere in index.html, altrimenti il burger non apre nulla
+grep -q 'id="drawer"' "${PROJECT_ROOT}/index.html" && grep -q 'id="burger"' "${PROJECT_ROOT}/index.html" \
+  || fail "index.html: burger o drawer mancanti"
+pass "index.html: burger + drawer presenti"
 
 # ---- 4) Manifest: niente path assoluti (rompono GitHub Pages in sottocartella) ----
 

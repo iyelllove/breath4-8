@@ -163,3 +163,100 @@ test.describe('Breath PWA', () => {
     await expect(page.locator('#cycles')).toHaveText('0');
   });
 });
+
+test.describe('Preset picker (burger menu)', () => {
+  // Ogni test riceve un context fresco da Playwright -> localStorage parte vuoto.
+  // Niente addInitScript per "ripulire" perché si rieseguirebbe anche al reload
+  // e romperebbe il test di persistenza.
+
+  test('burger apre il drawer e mostra i 5 preset con 4-8 selezionato', async ({ page }) => {
+    await page.goto('/');
+    const drawer = page.locator('#drawer');
+    await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+
+    await page.locator('#burger').click();
+    await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+
+    const presets = page.locator('.preset');
+    await expect(presets).toHaveCount(5);
+
+    // L'unico aria-current=true deve essere il preset di default '4-8'
+    const current = page.locator('.preset[aria-current="true"]');
+    await expect(current).toHaveCount(1);
+    await expect(current).toHaveAttribute('data-preset', '4-8');
+  });
+
+  test('chiusura del drawer via X', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#burger').click();
+    await expect(page.locator('#drawer')).toHaveAttribute('aria-hidden', 'false');
+    await page.locator('#drawer-close').click();
+    await expect(page.locator('#drawer')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  test('selezione 4-7-8: hint aggiornato e ciclo include la fase TRATTIENI', async ({ page }) => {
+    test.setTimeout(40_000);
+    await instrumentAudio(page);
+    await page.goto('/');
+
+    await page.locator('#burger').click();
+    await page.locator('.preset[data-preset="4-7-8"]').click();
+
+    // Drawer chiuso, hint aggiornato
+    await expect(page.locator('#drawer')).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator('#hint')).toContainText('4-7-8');
+    await expect(page.locator('#hint')).toContainText('4s in · 7s hold · 8s out');
+
+    // Start: dobbiamo vedere INSPIRA → TRATTIENI → ESPIRA
+    await page.locator('#toggle').click();
+    await expect(page.locator('#phase')).toHaveText('INSPIRA');
+    await expect(page.locator('#phase')).toHaveText('TRATTIENI', { timeout: 6_000 });
+    await expect(page.locator('#phase')).toHaveText('ESPIRA', { timeout: 9_000 });
+
+    // Durante TRATTIENI non viene emesso un nuovo beep (freq:0): beep totali == 2 (inspira + espira)
+    // Verifichiamo che le frequenze non includano nulla di diverso da 660 e 330
+    const audio = await page.evaluate(() => /** @type {any} */ (window).__audio);
+    const distinct = [...new Set(audio.frequencies)].sort();
+    expect(distinct).toEqual([330, 660]);
+  });
+
+  test('selezione Box: 4 fasi inclusa PAUSA', async ({ page }) => {
+    test.setTimeout(30_000);
+    await page.goto('/');
+    await page.locator('#burger').click();
+    await page.locator('.preset[data-preset="box"]').click();
+    await expect(page.locator('#hint')).toContainText('Box');
+
+    await page.locator('#toggle').click();
+    await expect(page.locator('#phase')).toHaveText('INSPIRA');
+    await expect(page.locator('#phase')).toHaveText('TRATTIENI', { timeout: 6_000 });
+    await expect(page.locator('#phase')).toHaveText('ESPIRA', { timeout: 6_000 });
+    await expect(page.locator('#phase')).toHaveText('PAUSA', { timeout: 6_000 });
+  });
+
+  test('switch durante una sessione: stoppa la sessione attiva', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#toggle').click();
+    await expect(page.locator('#toggle')).toHaveText('Stop');
+
+    await page.locator('#burger').click();
+    await page.locator('.preset[data-preset="coh-5"]').click();
+
+    // dopo il cambio preset il toggle è tornato Start
+    await expect(page.locator('#toggle')).toHaveText('Start');
+    await expect(page.locator('#phase')).toHaveText('PRONTO');
+  });
+
+  test('scelta del preset persiste tra reload (localStorage)', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#burger').click();
+    await page.locator('.preset[data-preset="coh-6"]').click();
+    await expect(page.locator('#hint')).toContainText('Coherent 6-6');
+
+    await page.reload();
+    await page.locator('#burger').click();
+    const current = page.locator('.preset[aria-current="true"]');
+    await expect(current).toHaveAttribute('data-preset', 'coh-6');
+    await expect(page.locator('#hint')).toContainText('Coherent 6-6');
+  });
+});
